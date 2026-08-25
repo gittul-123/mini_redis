@@ -6,7 +6,7 @@ class HashMap:
         self.size = 0
 
     def put(self, key, value):
-        index = key % len(self.buckets)
+        index = hash(key) % len(self.buckets)
 
         
         if self.buckets[index] is None:
@@ -38,7 +38,7 @@ class HashMap:
 
 
     def get(self, key):
-        index = key % len(self.buckets)
+        index = hash(key) % len(self.buckets)
 
         bucket = self.buckets[index]
         
@@ -57,7 +57,7 @@ class HashMap:
             return None
 
     def remove(self, key):
-        index = key % len(self.buckets)
+        index = hash(key) % len(self.buckets)
 
         bucket = self.buckets[index]
 
@@ -96,7 +96,7 @@ class HashMap:
                 current = bucket.head
                 while current is not None:
                     next_node = current.next
-                    index = current.data[0] % len(new_buckets)
+                    index = hash(current.data[0]) % len(new_buckets)
 
                     if new_buckets[index] is None:
                         new_bucket = DoublyLinkedList()
@@ -108,19 +108,4 @@ class HashMap:
                     current = next_node            
         self.buckets = new_buckets
 
-
-hashmap = HashMap()
-
-hashmap.put(17, "A")
-hashmap.put(27, "B")
-hashmap.put(42, "D")
-hashmap.put(52, "E")
-
-
-print(len(hashmap.buckets))
-print(hashmap.get(17))
-print(hashmap.get(27))
-print(hashmap.get(42))
-print(hashmap.get(52))
-print(hashmap.size)
 
