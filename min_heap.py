@@ -79,7 +79,7 @@ class MinHeap:
                         self._heapify_up(current)
 
                     else:
-                        self._heapify_down(parent)
+                        self._heapify_down(current)
 
                 else:
                     self._heapify_down(current)

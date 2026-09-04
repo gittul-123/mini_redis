@@ -11,44 +11,100 @@ while True:
 
     parts = command.split()
 
-    if parts[0].upper() == "SET":
-        redis.set(parts[1], parts[2])
-        print("OK")
+    if len(parts) == 0:
+        continue
 
-    elif parts[0].upper() == "GET":
-        result = redis.get(parts[1])
-        print(result)
+    cmd = parts[0].upper()
 
-    elif parts[0].upper() == "DEL":
-        result = redis.delete(parts[1])
-        print(result)
+    if cmd == "SET":
+        if len(parts) != 3:
+            print("(error) ERR wrong number of arguments for 'SET' command")
+        else:
+            result = redis.set(parts[1], parts[2])
 
-    elif parts[0].upper() == "KEYS":
-        result = redis.keys()
-        print(result)
+            if result == "(error) OOM":
+                print(result)
+            else:
+                print("OK")
 
-    elif parts[0].upper() == "EXISTS":
-        result = redis.exists(parts[1])
-        print(result)
+    elif cmd == "GET":
+        
+        if len(parts) != 2:
+            print("(error) ERR wrong number of arguments for 'GET' command")
+        else:
+            result = redis.get(parts[1])
 
-    elif parts[0].upper() == "DBSIZE":
-        result = redis.dbsize()
-        print(result)
+            if result is None:
+                print("(nil)")
+            else:
+                print(result)
 
-    elif parts[0].upper() == "EXPIRE":
-        result = redis.expire(parts[1], int(parts[2]))
-        print(result)
+    elif cmd == "DEL":
+        if len(parts) != 2:
+            print("(error) ERR wrong number of arguments for 'DEL' command")
+        else:
+            result = redis.delete(parts[1])
+            print(f"(integer) {result}")
 
-    elif parts[0].upper() == "TTL":
-        result = redis.ttl(parts[1])
-        print(result)
-
-    elif parts[0].upper() == "CONFIG":
-        if parts[1].upper() == "SET" and parts[2].lower() == "maxmemory":
-            result = redis.config(parts[3])
+    elif cmd == "KEYS":
+        if len(parts) != 1:
+            print("(error) ERR wrong number of arguments for 'KEYS' command")
+        else:
+            result = redis.keys()
             print(result)
 
-    elif parts[0].upper() == "INFO":
-        if parts[1].lower() == "memory":
+    elif cmd == "EXISTS":
+        if len(parts) != 2:
+            print("(error) ERR wrong number of arguments for 'EXISTS' command")
+        else:
+            result = redis.exists(parts[1])
+            print(f"(integer) {result}")
+
+    elif cmd == "DBSIZE":
+        if len(parts) != 1:
+            print("(error) ERR wrong number of arguments for 'DBSIZE' command")
+        else:
+            result = redis.dbsize()
+            print(f"(integer) {result}")
+
+    elif cmd == "EXPIRE":
+        if len(parts) != 3:
+            print("(error) ERR wrong number of arguments for 'EXPIRE' command")
+        else:
+            try:
+                seconds = int(parts[2])
+                result = redis.expire(parts[1], seconds)
+                print(result)
+            except ValueError:
+                print("(error) ERR value is not an integer or out of range")
+
+    elif cmd == "TTL":
+        if len(parts) != 2:
+            print("(error) ERR wrong number of arguments for 'TTL' command")
+        else:
+            result = redis.ttl(parts[1])
+            print(result)
+
+    elif cmd == "CONFIG":
+        if len(parts) != 4:
+            print("(error) ERR wrong number of arguments for 'CONFIG' command")
+        elif parts[1].upper() == "SET" and parts[2].lower() == "maxmemory":
+            try:
+                result = redis.config(parts[3])
+                print(result)
+            except ValueError:
+                print("(error) ERR value is not an integer or out of range")
+        else:
+            print(f"(error) ERR unknown command '{parts[0]}'")
+
+    elif cmd == "INFO":
+        if len(parts) != 2:
+            print("(error) ERR wrong number of arguments for 'INFO' command")
+        elif parts[1].lower() == "memory":
             result = redis.info()
-            print(result)    
+            print(result)
+        else:
+            print(f"(error) ERR unknown command '{parts[0]}'")
+
+    else:
+        print(f"(error) ERR unknown command '{parts[0]}'")

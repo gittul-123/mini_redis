@@ -24,6 +24,17 @@ class Redis:
         if old_value is not None:
             old_memory = self._calculate_memory(key, old_value)
 
+            current = self.lru.head
+
+            while current is not None:                          
+                if current.data[0] == key:
+                    self.lru.remove_node(current)
+                    break
+
+                current = current.next
+
+            self.ttl_heap.remove(key)
+
         else:
             old_memory = 0
 
@@ -82,8 +93,17 @@ class Redis:
     
     def delete(self, key):
         self._remove_expired()
+
+
+        value = self.store.get(key)
+
+        if value is None:
+            return 0
+
         self.store.remove(key)
         self.ttl_heap.remove(key)
+
+        self.used_memory -= self._calculate_memory(key, value) 
 
         current = self.lru.head
 
@@ -93,8 +113,12 @@ class Redis:
                 break
 
             current = current.next
+        
+        return 1
 
     def expire(self, key, seconds):
+        self._remove_expired()
+
         if not self.store.contains(key):
             return 0
 
@@ -127,21 +151,28 @@ class Redis:
         while self.ttl_heap.size() > 0:
             expire_at, key = self.ttl_heap.peek()
 
-            if expire_at <= time.time():
-                self.ttl_heap.pop()
-                self.store.remove(key)
+            if expire_at > time.time():
+                break
 
-            lru_current = self.lru.head
+            self.ttl_heap.pop()
 
-            while lru_current is not None:
-                if lru_current.data[0] == key:
-                    self.lru.remove_node(lru_current)
+            value = self.store.get(key)
+
+            if value is None:
+                continue
+
+            self.store.remove(key)
+
+            self.used_memory -= self._calculate_memory(key, value)
+
+            current = self.lru.head
+
+            while current is not None:
+                if current.data[0] == key:
+                    self.lru.remove_node(current)
                     break
 
-                lru_current = lru_current.next
-
-            else:
-                break
+                current = current.next
 
     def exists(self, key):
         self._remove_expired()
@@ -180,6 +211,8 @@ class Redis:
 
 
     def info(self):
+        self._remove_expired()
+        
         return(
             f"used_memory:{self.used_memory}\n"
             f"maxmemory:{self.maxmemory}\n"
